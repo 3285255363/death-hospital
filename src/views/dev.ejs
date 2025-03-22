@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>死亡医院 - 开发者页面</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .dev-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            margin: 20px auto;
+            height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        .location-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            scroll-margin-top: 20px;
+        }
+        .location-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .location-description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .options-list {
+            list-style: none;
+            padding: 0;
+        }
+        .option-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid #4CAF50;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .option-text {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .option-result {
+            margin-top: 5px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .health-change {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .health-gain {
+            color: #27ae60;
+        }
+        .health-loss {
+            color: #c0392b;
+        }
+        .nav-buttons {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .nav-button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .nav-button:hover {
+            background-color: #45a049;
+        }
+        .next-location {
+            cursor: pointer;
+            color: #4CAF50;
+            text-decoration: underline;
+        }
+        .next-location:hover {
+            color: #45a049;
+        }
+        .edit-form {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .form-group {
+            margin-bottom: 10px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .edit-button {
+            padding: 5px 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .delete-button {
+            background-color: #e74c3c;
+        }
+        
+        .save-button {
+            background-color: #2ecc71;
+        }
+        
+        .cancel-button {
+            background-color: #95a5a6;
+        }
+        
+        .add-button {
+            background-color: #27ae60;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .save-button {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        .save-button:hover {
+            background-color: #219a52;
+        }
+    </style>
+</head>
+<body>
+    <div class="dev-container" id="content">
+        <div class="header">
+            <h1>开发者页面</h1>
+            
+            <% if (message) { %>
+                <div class="message success-message" style="display: block;">
+                    <%= message %>
+                </div>
+            <% } %>
+            <% if (error) { %>
+                <div class="message error-message" style="display: block;">
+                    <%= error %>
+                </div>
+            <% } %>
+            
+            <div class="game-info">
+                <div class="info-item">
+                    <span class="label">游戏状态:</span>
+                    <span class="value"><%= gameState.gameStarted ? '进行中' : '未开始' %></span>
+                </div>
+                <div class="info-item">
+                    <span class="label">玩家名称:</span>
+                    <span class="value"><%= gameState.playerName || '未设置' %></span>
+                </div>
+                <div class="info-item">
+                    <span class="label">生命值:</span>
+                    <span class="value"><%= gameState.health %></span>
+                </div>
+                <div class="info-item">
+                    <span class="label">当前位置:</span>
+                    <span class="value"><%= locations.find(l => l.id === gameState.currentLocation)?.name || '未知' %></span>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-button add-button" onclick="showAddLocationForm()">添加新场景</button>
+                <button class="nav-button save-button" onclick="saveAllData()">保存所有更改</button>
+                <a href="/" class="nav-button">返回主页</a>
+            </div>
+        </div>
+
+        <!-- 添加新场景表单 -->
+        <div id="addLocationForm" class="edit-form">
+            <h3>添加新场景</h3>
+            <form action="/dev/location/add" method="POST">
+                <input type="hidden" name="password" value="0526">
+                <div class="form-group">
+                    <label for="locationId">场景ID:</label>
+                    <input type="text" id="locationId" name="id" required>
+                </div>
+                <div class="form-group">
+                    <label for="locationName">场景名称:</label>
+                    <input type="text" id="locationName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="locationDescription">场景描述:</label>
+                    <textarea id="locationDescription" name="description" required></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="edit-button save-button">保存</button>
+                    <button type="button" class="edit-button cancel-button" onclick="hideAddLocationForm()">取消</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="locations-list">
+            <% locations.forEach(location => { %>
+                <div class="location-card" id="location-<%= location.id %>">
+                    <div class="location-header">
+                        <h2><%= location.name %></h2>
+                        <div class="button-group">
+                            <button class="edit-button" onclick="showEditLocationForm('<%= location.id %>')">编辑场景</button>
+                            <button class="edit-button delete-button" onclick="deleteLocation('<%= location.id %>')">删除场景</button>
+                            <button class="edit-button add-button" onclick="showAddOptionForm('<%= location.id %>')">添加选项</button>
+                        </div>
+                    </div>
+                    <p class="description"><%= location.description %></p>
+                    
+                    <!-- 编辑场景表单 -->
+                    <div id="editLocation-<%= location.id %>" class="edit-form">
+                        <h3>编辑场景</h3>
+                        <form action="/dev/location/edit" method="POST">
+                            <input type="hidden" name="password" value="0526">
+                            <input type="hidden" name="id" value="<%= location.id %>">
+                            <div class="form-group">
+                                <label for="editName-<%= location.id %>">场景名称:</label>
+                                <input type="text" id="editName-<%= location.id %>" name="name" value="<%= location.name %>" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editDescription-<%= location.id %>">场景描述:</label>
+                                <textarea id="editDescription-<%= location.id %>" name="description" required><%= location.description %></textarea>
+                            </div>
+                            <div class="button-group">
+                                <button type="submit" class="edit-button save-button">保存</button>
+                                <button type="button" class="edit-button cancel-button" onclick="hideEditLocationForm('<%= location.id %>')">取消</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 添加选项表单 -->
+                    <div id="addOption-<%= location.id %>" class="edit-form">
+                        <h3>添加选项</h3>
+                        <form action="/dev/option/add" method="POST">
+                            <input type="hidden" name="password" value="0526">
+                            <input type="hidden" name="locationId" value="<%= location.id %>">
+                            <div class="form-group">
+                                <label for="optionId-<%= location.id %>">选项ID:</label>
+                                <input type="text" id="optionId-<%= location.id %>" name="optionId" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="optionText-<%= location.id %>">选项文本:</label>
+                                <input type="text" id="optionText-<%= location.id %>" name="text" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="optionResult-<%= location.id %>">选项结果:</label>
+                                <textarea id="optionResult-<%= location.id %>" name="result" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="healthChange-<%= location.id %>">生命值变化:</label>
+                                <input type="number" id="healthChange-<%= location.id %>" name="healthChange" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="nextLocation-<%= location.id %>">下一个场景ID:</label>
+                                <input type="text" id="nextLocation-<%= location.id %>" name="nextLocation">
+                            </div>
+                            <div class="button-group">
+                                <button type="submit" class="edit-button save-button">保存</button>
+                                <button type="button" class="edit-button cancel-button" onclick="hideAddOptionForm('<%= location.id %>')">取消</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="options">
+                        <% if (location.options && Object.keys(location.options).length > 0) { %>
+                            <% Object.entries(location.options).forEach(([key, option]) => { %>
+                                <div class="option" id="option-<%= location.id %>-<%= key %>">
+                                    <div class="option-header">
+                                        <div class="option-text">
+                                            <span class="key">[<%= key %>]</span>
+                                            <span class="text"><%= option.text %></span>
+                                        </div>
+                                        <div class="button-group">
+                                            <button class="edit-button" onclick="showEditOptionForm('<%= location.id %>', '<%= key %>')">编辑选项</button>
+                                            <button class="edit-button delete-button" onclick="deleteOption('<%= location.id %>', '<%= key %>')">删除选项</button>
+                                        </div>
+                                    </div>
+                                    <div class="option-details">
+                                        <span class="health-change <%= option.healthChange > 0 ? 'positive' : option.healthChange < 0 ? 'negative' : '' %>">
+                                            <%= option.healthChange > 0 ? '+' : '' %><%= option.healthChange %>
+                                        </span>
+                                        <% if (option.nextLocation) { %>
+                                            <span class="next-location" data-location="<%= option.nextLocation %>">
+                                                下一场景: <%= locations.find(l => l.id === option.nextLocation)?.name || option.nextLocation %>
+                                            </span>
+                                        <% } %>
+                                    </div>
+
+                                    <!-- 编辑选项表单 -->
+                                    <div id="editOption-<%= location.id %>-<%= key %>" class="edit-form">
+                                        <h3>编辑选项</h3>
+                                        <form action="/dev/option/edit" method="POST">
+                                            <input type="hidden" name="password" value="0526">
+                                            <input type="hidden" name="locationId" value="<%= location.id %>">
+                                            <input type="hidden" name="optionId" value="<%= key %>">
+                                            <div class="form-group">
+                                                <label for="editOptionText-<%= location.id %>-<%= key %>">选项文本:</label>
+                                                <input type="text" id="editOptionText-<%= location.id %>-<%= key %>" name="text" value="<%= option.text %>" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="editOptionResult-<%= location.id %>-<%= key %>">选项结果:</label>
+                                                <textarea id="editOptionResult-<%= location.id %>-<%= key %>" name="result" required><%= option.result %></textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="editHealthChange-<%= location.id %>-<%= key %>">生命值变化:</label>
+                                                <input type="number" id="editHealthChange-<%= location.id %>-<%= key %>" name="healthChange" value="<%= option.healthChange %>">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="editNextLocation-<%= location.id %>-<%= key %>">下一个场景ID:</label>
+                                                <input type="text" id="editNextLocation-<%= location.id %>-<%= key %>" name="nextLocation" value="<%= option.nextLocation %>">
+                                            </div>
+                                            <div class="button-group">
+                                                <button type="submit" class="edit-button save-button">保存</button>
+                                                <button type="button" class="edit-button cancel-button" onclick="hideEditOptionForm('<%= location.id %>', '<%= key %>')">取消</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <p class="no-options">该场景暂无选项</p>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+
+    <script>
+        // 自动刷新
+        let isEditing = false;
+
+        // 监听所有编辑表单的显示状态
+        function updateEditingState() {
+            const forms = document.querySelectorAll('.edit-form');
+            isEditing = Array.from(forms).some(form => form.style.display === 'block');
+        }
+
+        // 显示表单时更新编辑状态
+        function showForm(formId) {
+            document.getElementById(formId).style.display = 'block';
+            updateEditingState();
+        }
+
+        // 隐藏表单时更新编辑状态
+        function hideForm(formId) {
+            document.getElementById(formId).style.display = 'none';
+            updateEditingState();
+        }
+
+        // 更新显示/隐藏函数
+        function showAddLocationForm() {
+            showForm('addLocationForm');
+        }
+        
+        function hideAddLocationForm() {
+            hideForm('addLocationForm');
+        }
+        
+        function showEditLocationForm(locationId) {
+            showForm(`editLocation-${locationId}`);
+        }
+        
+        function hideEditLocationForm(locationId) {
+            hideForm(`editLocation-${locationId}`);
+        }
+        
+        function showAddOptionForm(locationId) {
+            showForm(`addOption-${locationId}`);
+        }
+        
+        function hideAddOptionForm(locationId) {
+            hideForm(`addOption-${locationId}`);
+        }
+        
+        function showEditOptionForm(locationId, optionId) {
+            showForm(`editOption-${locationId}-${optionId}`);
+        }
+        
+        function hideEditOptionForm(locationId, optionId) {
+            hideForm(`editOption-${locationId}-${optionId}`);
+        }
+
+        // 自动刷新时检查编辑状态
+        setInterval(() => {
+            if (!isEditing) {  // 只在没有正在编辑的表单时刷新
+                fetch('/dev/refresh')
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newContent = doc.querySelector('.dev-container').innerHTML;
+                        document.querySelector('.dev-container').innerHTML = newContent;
+                        // 重新绑定事件监听器
+                        bindEventListeners();
+                    })
+                    .catch(error => console.error('刷新失败:', error));
+            }
+        }, 2000);
+
+        // 绑定事件监听器
+        function bindEventListeners() {
+            // 点击下一场景滚动到对应位置
+            document.querySelector('.dev-container').addEventListener('click', (e) => {
+                const nextLocation = e.target.closest('.next-location');
+                if (nextLocation) {
+                    const locationId = nextLocation.dataset.location;
+                    const targetElement = document.getElementById(`location-${locationId}`);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+        }
+
+        // 初始绑定事件监听器
+        bindEventListeners();
+
+        // 自动隐藏消息
+        setTimeout(() => {
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(msg => {
+                msg.style.display = 'none';
+            });
+        }, 3000);
+
+        // 删除场景
+        function deleteLocation(locationId) {
+            if (confirm('确定要删除这个场景吗？')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/dev/location/delete';
+                
+                const passwordInput = document.createElement('input');
+                passwordInput.type = 'hidden';
+                passwordInput.name = 'password';
+                passwordInput.value = '0526';
+                
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'id';
+                input.value = locationId;
+                
+                form.appendChild(passwordInput);
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // 删除选项
+        function deleteOption(locationId, optionId) {
+            if (confirm('确定要删除这个选项吗？')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/dev/option/delete';
+                
+                const passwordInput = document.createElement('input');
+                passwordInput.type = 'hidden';
+                passwordInput.name = 'password';
+                passwordInput.value = '0526';
+                
+                const locationInput = document.createElement('input');
+                locationInput.type = 'hidden';
+                locationInput.name = 'locationId';
+                locationInput.value = locationId;
+                
+                const optionInput = document.createElement('input');
+                optionInput.type = 'hidden';
+                optionInput.name = 'optionId';
+                optionInput.value = optionId;
+                
+                form.appendChild(passwordInput);
+                form.appendChild(locationInput);
+                form.appendChild(optionInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function saveAllData() {
+            if (confirm('确定要保存所有更改吗？')) {
+                fetch('/dev/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password: '0526' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('保存成功！');
+                    } else {
+                        alert('保存失败：' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('保存失败：' + error.message);
+                });
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>死亡医院 - 开始新游戏</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1a1a1a;
+            font-family: Arial, sans-serif;
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+            padding: 3rem;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+            min-width: 400px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 3rem;
+            color: #ff3333;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+
+        .start-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .name-input {
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 300px;
+            background-color: #333;
+            color: white;
+        }
+
+        .name-input::placeholder {
+            color: #999;
+        }
+
+        .submit-button {
+            padding: 1.2rem 2.5rem;
+            font-size: 1.5rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 250px;
+        }
+
+        .submit-button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .submit-button:active {
+            transform: scale(0.98);
+        }
+
+        .back-button {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            background-color: #666;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .back-button:hover {
+            background-color: #ff0000;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                min-width: 300px;
+                padding: 2rem;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .submit-button {
+                font-size: 1.2rem;
+                min-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>死亡医院</h1>
+        <form action="/start" method="POST" class="start-form">
+            <input type="text" name="playerName" class="name-input" placeholder="请输入你的名字" required>
+            <button type="submit" class="submit-button">开始游戏</button>
+            <a href="/" class="back-button">返回主页</a>
+        </form>
+    </div>
+</body>
+</html> 

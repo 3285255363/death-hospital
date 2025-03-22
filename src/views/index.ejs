@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>死亡医院 - 主页</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1a1a1a;
+            font-family: Arial, sans-serif;
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+            padding: 3rem;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+            min-width: 400px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 3rem;
+            color: #ff3333;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .menu-button {
+            padding: 1.2rem 2.5rem;
+            font-size: 1.5rem;
+            background-color: #ff3333;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            width: 250px;
+        }
+
+        .menu-button:hover {
+            background-color: #ff0000;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+        }
+
+        .menu-button:active {
+            transform: scale(0.98);
+        }
+
+        .exit-button {
+            background-color: #666;
+        }
+
+        .exit-button:hover {
+            background-color: #ff0000;
+        }
+
+        form {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                min-width: 300px;
+                padding: 2rem;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .menu-button {
+                font-size: 1.2rem;
+                width: 200px;
+            }
+        }
+
+        .continue-button {
+            display: block;
+            width: 200px;
+            padding: 10px;
+            margin: 10px auto;
+            background-color: #2ecc71;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .continue-button:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>死亡医院</h1>
+        <div class="menu-options">
+            <form action="/start" method="GET">
+                <button type="submit" class="menu-button">新游戏</button>
+            </form>
+            <% if (gameStarted) { %>
+                <form action="/continue" method="GET">
+                    <button type="submit" class="menu-button" style="background-color: #2ecc71;">继续游戏</button>
+                </form>
+            <% } %>
+            <form action="/dev/login" method="GET">
+                <button type="submit" class="menu-button">开发者页面</button>
+            </form>
+            <form>
+                <button onclick="exitGame()" class="menu-button exit-button">退出游戏</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function exitGame() {
+            if (confirm('确定要退出游戏吗？')) {
+                window.close();
+            }
+        }
+    </script>
+</body>
+</html> 
