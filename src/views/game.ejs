@@ -211,6 +211,18 @@
         .sound-button:hover {
             transform: scale(1.1);
         }
+        /* 添加按钮点击动画 */
+        button[name="choice"] {
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        
+        button[name="choice"]:active {
+            transform: scale(0.95);
+        }
+        
+        button[name="choice"]:disabled {
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -266,18 +278,55 @@
 
             <div class="options">
                 <% Object.entries(currentLocation.options).forEach(([key, option]) => { %>
-                    <form action="/choice" method="POST">
-                        <input type="hidden" name="choice" value="<%= key %>">
-                        <button type="submit" class="option-button">
-                            <%= option.text %>
-                        </button>
-                    </form>
+                    <button 
+                        class="option-button" 
+                        onclick="handleChoice('<%= key %>')"
+                        data-choice="<%= key %>"
+                    >
+                        <%= option.text %>
+                    </button>
                 <% }); %>
             </div>
         </div>
     </div>
 
     <script>
+        // 检测是否在微信浏览器中
+        function isWeixinBrowser(){
+            var ua = navigator.userAgent.toLowerCase();
+            return /micromessenger/i.test(ua);
+        }
+
+        // 显示微信提示
+        function showWeixinTip() {
+            if (isWeixinBrowser()) {
+                const tip = document.createElement('div');
+                tip.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    z-index: 10000;
+                    text-align: center;
+                    font-size: 14px;
+                    max-width: 90%;
+                `;
+                tip.innerHTML = '建议使用浏览器打开以获得最佳体验（包括音效）<br>点击右上角"..."，选择"在浏览器中打开"';
+                document.body.appendChild(tip);
+                
+                // 3秒后自动隐藏提示
+                setTimeout(() => {
+                    tip.style.opacity = '0';
+                    tip.style.transition = 'opacity 0.5s';
+                    setTimeout(() => tip.remove(), 500);
+                }, 3000);
+            }
+        }
+
         // 音频控制
         const bgMusic = document.getElementById('bgMusic');
         const volumeSlider = document.getElementById('volume');
@@ -288,9 +337,12 @@
         // 强制设置循环播放
         bgMusic.loop = true;
 
-        // 在页面加载完成后立即播放
+        // 在页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
-            // 尝试立即播放
+            // 显示微信提示
+            showWeixinTip();
+
+            // 尝试播放音乐
             const startPlaying = async () => {
                 try {
                     // 加载保存的音量设置
@@ -298,30 +350,33 @@
                     volumeSlider.value = savedVolume;
                     bgMusic.volume = savedVolume / 100;
                     
-                    await bgMusic.play();
-                    console.log('音乐开始播放');
+                    if (!isWeixinBrowser()) {
+                        await bgMusic.play();
+                    }
                 } catch (err) {
                     console.log('自动播放失败，等待用户交互');
-                    // 添加一次性点击事件监听器
-                    const startAudio = async () => {
-                        try {
-                            await bgMusic.play();
-                            document.removeEventListener('click', startAudio);
-                        } catch (error) {
-                            console.error('播放失败:', error);
-                        }
-                    };
-                    document.addEventListener('click', startAudio);
+                    if (!isWeixinBrowser()) {
+                        const startAudio = async () => {
+                            try {
+                                await bgMusic.play();
+                                document.removeEventListener('click', startAudio);
+                            } catch (error) {
+                                console.error('播放失败:', error);
+                            }
+                        };
+                        document.addEventListener('click', startAudio);
+                    }
                 }
             };
             startPlaying();
-        });
 
-        // 确保音频结束后重新播放
-        bgMusic.addEventListener('ended', function() {
-            console.log('音频播放结束，重新开始');
-            bgMusic.currentTime = 0;
-            bgMusic.play();
+            // 预加载下一个场景的数据
+            preloadNextLocations();
+            
+            // 保存按钮原始文本
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.dataset.originalText = button.textContent;
+            });
         });
 
         // 音量滑块控制
@@ -361,6 +416,118 @@
             if (event.target == modal) {
                 modal.style.display = 'none';
             }
+        }
+
+        // 预加载下一个场景的数据
+        async function preloadNextLocations() {
+            const options = document.querySelectorAll('.option-button');
+            for (const option of options) {
+                const choice = option.dataset.choice;
+                try {
+                    const response = await fetch(`/api/location-data?choice=${choice}`, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        sessionStorage.setItem(`location_${choice}`, JSON.stringify(data));
+                    }
+                } catch (error) {
+                    console.error('预加载失败:', error);
+                }
+            }
+        }
+
+        // 处理选项选择
+        async function handleChoice(choice) {
+            const button = document.querySelector(`button[data-choice="${choice}"]`);
+            if (!button || button.disabled) return;
+
+            // 禁用所有按钮
+            document.querySelectorAll('.option-button').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+            });
+
+            // 更新当前按钮状态
+            button.textContent = '正在前往...';
+
+            try {
+                // 检查是否有预加载的数据
+                const cachedData = sessionStorage.getItem(`location_${choice}`);
+                if (cachedData) {
+                    updateGameContent(JSON.parse(cachedData));
+                    // 异步发送选择到服务器
+                    fetch('/choice', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ choice })
+                    });
+                } else {
+                    // 如果没有缓存数据，直接从服务器获取
+                    const response = await fetch('/choice', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ choice })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        updateGameContent(data);
+                    } else {
+                        throw new Error('请求失败');
+                    }
+                }
+            } catch (error) {
+                console.error('选择处理失败:', error);
+                // 恢复按钮状态
+                document.querySelectorAll('.option-button').forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+                button.textContent = button.dataset.originalText;
+            }
+        }
+
+        // 更新游戏内容
+        function updateGameContent(data) {
+            const { location, gameState } = data;
+            
+            // 更新位置信息
+            document.querySelector('.location-info h2').textContent = location.name;
+            document.querySelector('.location-info p').textContent = location.description;
+
+            // 更新选项
+            const optionsContainer = document.querySelector('.options');
+            optionsContainer.innerHTML = Object.entries(location.options)
+                .map(([key, option]) => `
+                    <button 
+                        class="option-button" 
+                        onclick="handleChoice('${key}')"
+                        data-choice="${key}"
+                    >
+                        ${option.text}
+                    </button>
+                `).join('');
+
+            // 更新游戏状态
+            if (gameState.health !== undefined) {
+                document.querySelectorAll('.heart').forEach((heart, index) => {
+                    heart.classList.toggle('broken', index >= gameState.health);
+                });
+            }
+
+            // 开始预加载下一个场景
+            preloadNextLocations();
+
+            // 滚动到顶部
+            window.scrollTo(0, 0);
         }
     </script>
 </body>

@@ -1,14 +1,14 @@
 {
   "name": "death-hospital",
   "version": "1.0.0",
-  "description": "一个令人毛骨悚然的文字冒险游戏",
-  "main": "src/server.js",
+  "description": "A text-based horror game",
+  "main": "src/api/index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "start": "node src/api/index.js",
+    "dev": "nodemon src/api/index.js"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": "18.x"
   },
   "keywords": [
     "game",
@@ -19,10 +19,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ejs": "^3.1.9",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "ejs": "^3.1.9"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.2"
   }
 }
