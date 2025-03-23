@@ -62,14 +62,27 @@ app.get('/dev/login', (req, res) => {
 
 // 主页
 app.get('/', (req, res) => {
-    const state = gameState.getState();
-    // 检查游戏状态是否有效
-    if (!state.gameStarted || !state.playerName || state.playerName.length === 0) {
-        gameState.resetGame(); // 如果状态无效，重置游戏
+    try {
+        const state = gameState.getState();
+        
+        // 检查游戏状态是否有效
+        if (!state.gameStarted || !state.playerName) {
+            console.log('游戏未开始或状态无效，重置游戏');
+            gameState.resetGame();
+            return res.render('index', { 
+                gameStarted: false,
+                playerName: null
+            });
+        }
+
+        res.render('index', { 
+            gameStarted: true,
+            playerName: state.playerName
+        });
+    } catch (error) {
+        console.error('主页加载错误:', error);
+        res.status(500).render('error', { error: '加载主页失败' });
     }
-    res.render('index', {
-        gameStarted: state.gameStarted && state.playerName && state.playerName.length > 0
-    });
 });
 
 // 开始新游戏页面
@@ -145,17 +158,36 @@ app.post('/choice', express.json(), (req, res) => {
 app.post('/return-to-menu', (req, res) => {
     try {
         gameState.resetGame();
-        res.json({ success: true });
+        res.json({ 
+            success: true,
+            redirect: '/'
+        });
     } catch (error) {
         console.error('返回菜单失败:', error);
-        res.status(500).json({ success: false, error: '返回菜单失败' });
+        res.status(500).json({ 
+            success: false, 
+            error: '返回菜单失败',
+            redirect: '/'
+        });
     }
 });
 
 // 重置游戏
 app.post('/reset', (req, res) => {
-    gameState.resetGame();
-    res.redirect('/');
+    try {
+        gameState.resetGame();
+        res.json({ 
+            success: true,
+            redirect: '/'
+        });
+    } catch (error) {
+        console.error('重置游戏失败:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: '重置游戏失败',
+            redirect: '/'
+        });
+    }
 });
 
 // 开发者页面路由
