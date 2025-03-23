@@ -138,6 +138,29 @@
                 window.close();
             }
         }
+
+        // 重置游戏按钮点击事件
+        document.getElementById('resetGame').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    console.error('重置游戏失败:', data.error);
+                    alert('重置游戏失败，请重试');
+                }
+            } catch (error) {
+                console.error('重置游戏请求失败:', error);
+                alert('重置游戏失败，请重试');
+            }
+        });
     </script>
 </body>
 </html> 

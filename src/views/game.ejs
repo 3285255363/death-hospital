@@ -529,6 +529,59 @@
             // 滚动到顶部
             window.scrollTo(0, 0);
         }
+
+        // 返回菜单按钮点击事件
+        document.getElementById('returnToMenu').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/return-to-menu', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    console.error('返回菜单失败:', data.error);
+                    alert('返回菜单失败，请重试');
+                }
+            } catch (error) {
+                console.error('返回菜单请求失败:', error);
+                alert('返回菜单失败，请重试');
+            }
+        });
+
+        // 选项点击事件
+        document.querySelectorAll('.choice-button').forEach(button => {
+            button.addEventListener('click', async () => {
+                const choice = button.dataset.choice;
+                try {
+                    const response = await fetch('/choice', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ choice })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // 更新游戏状态
+                        updateGameState(data.gameState);
+                        // 更新位置信息
+                        updateLocation(data.currentLocation);
+                    } else {
+                        console.error('选择处理失败:', data.error);
+                        alert('选择处理失败，请重试');
+                    }
+                } catch (error) {
+                    console.error('选择请求失败:', error);
+                    alert('选择处理失败，请重试');
+                }
+            });
+        });
     </script>
 </body>
 </html> 
