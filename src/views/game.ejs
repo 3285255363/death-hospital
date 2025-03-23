@@ -262,9 +262,7 @@
                     </div>
                 </div>
                 <div class="settings-buttons">
-                    <form action="/return-to-menu" method="POST" style="display: inline;">
-                        <button type="submit" class="menu-button">返回主菜单</button>
-                    </form>
+                    <button onclick="returnToMenu()" class="menu-button">返回主菜单</button>
                     <button onclick="closeSettings()" class="close-button">关闭</button>
                 </div>
             </div>
@@ -439,6 +437,30 @@
             }
         }
 
+        // 返回菜单函数
+        async function returnToMenu() {
+            try {
+                const response = await fetch('/return-to-menu', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 直接重定向到主页
+                    window.location.replace('/');
+                } else {
+                    console.error('返回菜单失败:', data.error);
+                    alert('返回菜单失败，请重试');
+                }
+            } catch (error) {
+                console.error('返回菜单请求失败:', error);
+                alert('返回菜单失败，请重试');
+            }
+        }
+
         // 处理选项选择
         async function handleChoice(choice) {
             const button = document.querySelector(`button[data-choice="${choice}"]`);
@@ -454,35 +476,26 @@
             button.textContent = '正在前往...';
 
             try {
-                // 检查是否有预加载的数据
-                const cachedData = sessionStorage.getItem(`location_${choice}`);
-                if (cachedData) {
-                    updateGameContent(JSON.parse(cachedData));
-                    // 异步发送选择到服务器
-                    fetch('/choice', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ choice })
-                    });
-                } else {
-                    // 如果没有缓存数据，直接从服务器获取
-                    const response = await fetch('/choice', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({ choice })
-                    });
+                const response = await fetch('/choice', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ choice })
+                });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        updateGameContent(data);
-                    } else {
-                        throw new Error('请求失败');
-                    }
+                if (!response.ok) {
+                    throw new Error('请求失败');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    // 更新游戏内容
+                    updateGameContent(data);
+                    // 滚动到顶部
+                    window.scrollTo(0, 0);
+                } else {
+                    throw new Error(data.error || '选择处理失败');
                 }
             } catch (error) {
                 console.error('选择处理失败:', error);
@@ -492,6 +505,7 @@
                     btn.style.opacity = '1';
                 });
                 button.textContent = button.dataset.originalText;
+                alert('选择处理失败，请重试');
             }
         }
 
@@ -529,59 +543,6 @@
             // 滚动到顶部
             window.scrollTo(0, 0);
         }
-
-        // 返回菜单按钮点击事件
-        document.getElementById('returnToMenu').addEventListener('click', async () => {
-            try {
-                const response = await fetch('/return-to-menu', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    window.location.href = data.redirect;
-                } else {
-                    console.error('返回菜单失败:', data.error);
-                    alert('返回菜单失败，请重试');
-                }
-            } catch (error) {
-                console.error('返回菜单请求失败:', error);
-                alert('返回菜单失败，请重试');
-            }
-        });
-
-        // 选项点击事件
-        document.querySelectorAll('.choice-button').forEach(button => {
-            button.addEventListener('click', async () => {
-                const choice = button.dataset.choice;
-                try {
-                    const response = await fetch('/choice', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ choice })
-                    });
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        // 更新游戏状态
-                        updateGameState(data.gameState);
-                        // 更新位置信息
-                        updateLocation(data.currentLocation);
-                    } else {
-                        console.error('选择处理失败:', data.error);
-                        alert('选择处理失败，请重试');
-                    }
-                } catch (error) {
-                    console.error('选择请求失败:', error);
-                    alert('选择处理失败，请重试');
-                }
-            });
-        });
     </script>
 </body>
 </html> 

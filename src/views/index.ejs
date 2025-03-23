@@ -118,8 +118,8 @@
             <form action="/start" method="GET">
                 <button type="submit" class="menu-button">新游戏</button>
             </form>
-            <% if (gameStarted) { %>
-                <form action="/continue" method="GET">
+            <% if (gameStarted && playerName) { %>
+                <form action="/game" method="GET">
                     <button type="submit" class="menu-button" style="background-color: #2ecc71;">继续游戏</button>
                 </form>
             <% } %>
@@ -127,7 +127,7 @@
                 <button type="submit" class="menu-button">开发者页面</button>
             </form>
             <form>
-                <button onclick="exitGame()" class="menu-button exit-button">退出游戏</button>
+                <button type="button" onclick="exitGame()" class="menu-button exit-button">退出游戏</button>
             </form>
         </div>
     </div>

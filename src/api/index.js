@@ -123,34 +123,55 @@ app.get('/game', (req, res) => {
 });
 
 // 处理选择
-app.post('/choice', express.json(), (req, res) => {
+app.post('/choice', (req, res) => {
     try {
-        const choice = req.body.choice;
+        const { choice } = req.body;
         if (!choice) {
-            return res.status(400).json({ error: '未提供选择' });
+            return res.status(400).json({ 
+                success: false, 
+                error: '无效的选择' 
+            });
         }
-        
+
         const state = gameState.getState();
-        const currentLocation = locations.getLocation(state.currentLocation);
-        
-        // 检查选择是否有效
-        if (!currentLocation.options || !currentLocation.options[choice]) {
-            return res.status(400).json({ error: '无效的选择' });
+        if (!state.gameStarted || !state.playerName) {
+            return res.status(400).json({ 
+                success: false, 
+                error: '游戏未开始' 
+            });
         }
-        
-        gameState.makeChoice(choice);
-        const newState = gameState.getState();
-        const newLocation = locations.getLocation(newState.currentLocation);
-        
+
+        // 处理选择
+        const result = gameState.processChoice(choice);
+        if (!result.success) {
+            return res.status(400).json({ 
+                success: false, 
+                error: result.error 
+            });
+        }
+
+        // 获取更新后的状态
+        const updatedState = gameState.getState();
+        const currentLocation = locations.getLocation(updatedState.currentLocation);
+
+        if (!currentLocation) {
+            return res.status(400).json({ 
+                success: false, 
+                error: '无效的位置' 
+            });
+        }
+
         res.json({
             success: true,
-            message: '选择已处理',
-            gameState: newState,
-            currentLocation: newLocation
+            gameState: updatedState,
+            currentLocation
         });
     } catch (error) {
-        console.error('处理选择时出错:', error);
-        res.status(500).json({ error: '服务器错误' });
+        console.error('处理选择错误:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: '处理选择失败' 
+        });
     }
 });
 
@@ -160,14 +181,13 @@ app.post('/return-to-menu', (req, res) => {
         gameState.resetGame();
         res.json({ 
             success: true,
-            redirect: '/'
+            message: '游戏已重置'
         });
     } catch (error) {
         console.error('返回菜单失败:', error);
         res.status(500).json({ 
             success: false, 
-            error: '返回菜单失败',
-            redirect: '/'
+            error: '返回菜单失败'
         });
     }
 });
@@ -178,14 +198,13 @@ app.post('/reset', (req, res) => {
         gameState.resetGame();
         res.json({ 
             success: true,
-            redirect: '/'
+            message: '游戏已重置'
         });
     } catch (error) {
         console.error('重置游戏失败:', error);
         res.status(500).json({ 
             success: false, 
-            error: '重置游戏失败',
-            redirect: '/'
+            error: '重置游戏失败'
         });
     }
 });
