@@ -61,143 +61,38 @@ app.get('/dev/login', (req, res) => {
 });
 
 // 主页
-app.get('/', cacheMiddleware(60000), (req, res) => {
-    const state = gameState.getState();
-    console.log('主页游戏状态:', state);
+app.get('/', (req, res) => {
     res.render('index', { 
-        gameStarted: state.gameStarted && state.playerName && state.playerName.length > 0,
         message: null,
         error: null
     });
 });
 
-// 开始新游戏页面
-app.get('/start', (req, res) => {
-    res.render('start');
-});
-
-// 处理开始新游戏的表单提交
-app.post('/start', async (req, res) => {
-    try {
-        const locations = await locations.getAllLocations();
-        const startLocation = locations.find(loc => loc.isStart);
-        if (!startLocation) {
-            throw new Error('找不到起始位置');
-        }
-
-        const gameState = new gameState({
-            currentLocation: startLocation._id,
-            visitedLocations: [startLocation._id],
-            inventory: []
-        });
-
-        await gameState.save();
-        res.redirect(`/game/${gameState._id}`);
-    } catch (error) {
-        console.error('开始游戏时出错:', error);
-        res.status(500).send('开始游戏时出错');
-    }
+// 开始新游戏
+app.post('/start', (req, res) => {
+    res.redirect('/game');
 });
 
 // 游戏页面路由
-app.get('/game/:gameId', async (req, res) => {
-    try {
-        const [gameState, locations] = await Promise.all([
-            gameState.findById(req.params.gameId),
-            locations.getAllLocations()
-        ]);
-
-        if (!gameState) {
-            return res.status(404).send('游戏未找到');
-        }
-
-        const currentLocation = locations.find(
-            loc => loc._id.toString() === gameState.currentLocation.toString()
-        );
-
-        if (!currentLocation) {
-            return res.status(404).send('当前位置未找到');
-        }
-
-        res.render('game', {
-            gameState,
-            location: currentLocation,
-            message: res.locals.message
-        });
-    } catch (error) {
-        console.error('加载游戏页面时出错:', error);
-        res.status(500).send('加载游戏页面时出错');
-    }
+app.get('/game', (req, res) => {
+    res.render('game', {
+        message: res.locals.message
+    });
 });
 
-// 添加预加载 API 路由
-app.get('/api/location-data', async (req, res) => {
-    try {
-        const choice = req.query.choice;
-        const state = gameState.getState();
-        const currentLocation = locations.getLocation(state.currentLocation);
-        
-        if (!currentLocation || !currentLocation.options || !currentLocation.options[choice]) {
-            return res.status(404).json({ error: '选项未找到' });
-        }
-
-        const nextLocationId = currentLocation.options[choice].nextLocation;
-        const nextLocation = locations.getLocation(nextLocationId);
-
-        if (!nextLocation) {
-            return res.status(404).json({ error: '下一个位置未找到' });
-        }
-
-        // 只返回必要的数据
-        res.json({
-            location: {
-                name: nextLocation.name,
-                description: nextLocation.description,
-                options: nextLocation.options
-            },
-            gameState: {
-                health: state.health
-            }
-        });
-    } catch (error) {
-        console.error('获取位置数据时出错:', error);
-        res.status(500).json({ error: '服务器错误' });
-    }
-});
-
-// 修改选择路由以支持 JSON 响应
-app.post('/choice', express.json(), async (req, res) => {
+// 处理选择
+app.post('/choice', express.json(), (req, res) => {
     try {
         const choice = req.body.choice;
-        const state = gameState.getState();
-        
-        if (!state.gameStarted) {
-            return res.status(400).json({ error: '游戏未开始' });
-        }
-
         if (!choice) {
             return res.status(400).json({ error: '未提供选择' });
         }
 
-        const result = gameState.makeChoice(choice);
-        
-        if (req.headers.accept?.includes('application/json')) {
-            // 如果客户端请求 JSON 响应
-            const currentLocation = locations.getLocation(state.currentLocation);
-            res.json({
-                location: {
-                    name: currentLocation.name,
-                    description: currentLocation.description,
-                    options: currentLocation.options
-                },
-                gameState: {
-                    health: state.health
-                }
-            });
-        } else {
-            // 保持向后兼容的重定向响应
-            res.redirect('/game');
-        }
+        // 这里添加选择处理逻辑
+        res.json({
+            success: true,
+            message: '选择已处理'
+        });
     } catch (error) {
         console.error('处理选择时出错:', error);
         res.status(500).json({ error: '服务器错误' });
@@ -206,7 +101,6 @@ app.post('/choice', express.json(), async (req, res) => {
 
 // 重置游戏
 app.post('/reset', (req, res) => {
-    gameState.resetGame();
     res.redirect('/');
 });
 
