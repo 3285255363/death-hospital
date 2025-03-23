@@ -144,7 +144,7 @@ app.post('/choice', express.json(), (req, res) => {
 // 返回菜单路由
 app.post('/return-to-menu', (req, res) => {
     try {
-        gameState.reset();
+        gameState.resetGame();
         res.json({ success: true });
     } catch (error) {
         console.error('返回菜单失败:', error);
